@@ -2,9 +2,10 @@ import React from "react";
 import ReactDOM from "react-dom";
 import "./index.css";
 
-//square component
-//state is controlled by <Board/> 
+//square component(class based)
+//state is controlled by <Board/>
 //so it is a controlled component
+/*
 class Square extends React.Component {
   render() {
     return (
@@ -21,6 +22,20 @@ class Square extends React.Component {
     );
   }
 }
+*/
+//Square component (Functional)
+function Square(props) {
+  return (
+    <button
+      className="square"
+      onClick={() => {
+        props.onClick();
+      }}
+    >
+      {props.value}
+    </button>
+  );
+}
 
 //Board component
 //board will track the app state
@@ -28,8 +43,10 @@ class Board extends React.Component {
   constructor(props) {
     super(props);
     //initializing each box with null
+    //and first move as 'X'
     this.state = {
       squares: Array(9).fill(null),
+      xIsNext: true,
     };
   }
 
@@ -47,16 +64,27 @@ class Board extends React.Component {
   handleClick(i) {
     //copy the whole array
     const squares = this.state.squares.slice();
+    //if there is a winner then no further action is valid
+    //if a box is aleady filled then that box will not be updated
+    if (calculateWinner(squares) || squares[i]) {
+      return;
+    }
     //update a element
-    squares[i] = "X";
+    squares[i] = this.state.xIsNext ? "X" : "O";
     //update the state
     //this will update the parent state(<Board/>)
     //as <Square/> is sharing state with its parent <Board/> it will re render as well
-    this.setState({ squares: squares });
+    this.setState({ squares: squares, xIsNext: !this.state.xIsNext });
   }
 
   render() {
-    const status = "Next player: X";
+    const winner = calculateWinner(this.state.squares);
+    let status;
+    if (winner) {
+      status = "Winner: " + winner;
+    } else {
+      status = " Next player: " + (this.state.xIsNext ? "X" : "O");
+    }
 
     return (
       <div>
@@ -99,3 +127,23 @@ class Game extends React.Component {
 }
 
 ReactDOM.render(<Game />, document.getElementById("root"));
+
+function calculateWinner(squares) {
+  const lines = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6],
+  ];
+  for (let i = 0; i < lines.length; i++) {
+    const [a, b, c] = lines[i];
+    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+      return squares[a];
+    }
+  }
+  return null;
+}
